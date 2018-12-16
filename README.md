@@ -1,1 +1,2 @@
-# coursera-practicalML
+# Practical Machine Learning
+Coursera Data Science Specialisation
