@@ -12,15 +12,6 @@ output:
   pdf_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
-options(width=120)
-library(lattice)
-library(ggplot2)
-library(plyr)
-library(randomForest)
-```
-
 ## Summary
 
 Using the WLE dataset, a predictive model will be trained to predict what barbell exercise was performed.
@@ -31,6 +22,17 @@ Using the WLE dataset, a predictive model will be trained to predict what barbel
 5. Selecting a model
 6. Implementing the model & evaluating it's performance
 7. Predicting 'classe' of the test set data
+
+## Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+options(width=120)
+library(lattice)
+library(ggplot2)
+library(plyr)
+library(randomForest)
+```
 
 ## Reading the data
 
