@@ -1,0 +1,14 @@
+---
+title: "Predicting Workout Technique from Fitness Tracker Data"
+author: "Abhigna Revuru"
+date: "17 Dec 2018"
+output:
+  html_document:
+    fig_height: 9
+    fig_width: 9
+    keep_md: yes
+  md_document:
+    variant: markdown_github
+  pdf_document: default
+---
+
