@@ -4,8 +4,10 @@ author: "Abhigna Revuru"
 date: "17 Dec 2018"
 output:
   html_document:
-    fig_height: 6
-    fig_width: 10
+    keep_md: yes
+  md_document:
+    variant: markdown_github
+  pdf_document: default
 ---
 
 ## Summary
@@ -19,21 +21,17 @@ Using the WLE dataset, a predictive model will be trained to predict what barbel
 6. Implementing the model & evaluating it's performance
 7. Predicting 'classe' of the test set data
 
-## Setup
-
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE, fig.width=10, fig.height=5)
 options(width=120)
 library(lattice)
 library(ggplot2)
 library(plyr)
 library(randomForest)
 ```
-
 ## Reading the data
 
-First change 'am' to  factor (0 = automatic, 1 = manual)
-And make cylinders a factor as well (since it is not continious)
+First change 'am' to a factor (0 = automatic, 1 = manual) and make cylinders a factor as well (since it is not continuous).
 
 ```{r}
 training.raw <- read.csv("pml-training.csv")
@@ -42,7 +40,7 @@ testing.raw <- read.csv("pml-testing.csv")
 
 ## Cleaning the data
 
-Look at the dimensions & head of the dataset to get an idea
+Look at the dimensions & head of the dataset to get an idea.
 ```{r}
 # Res 1
 dim(training.raw)
@@ -54,7 +52,8 @@ dim(training.raw)
 #summary(training.raw)
 ```
 
-What we see is a lot of data with NA / empty values. Let's remove those
+
+What we see is a lot of data with NA / empty values. Let's remove those.
 
 ```{r}
 maxNAPerc = 20
@@ -64,7 +63,7 @@ training.cleaned01 <- training.raw[,-removeColumns]
 testing.cleaned01 <- testing.raw[,-removeColumns]
 ```
 
-Also remove all time related data, since we won't use those
+Also remove all time related data, since we won't use those.
 
 ```{r}
 removeColumns <- grep("timestamp", names(training.cleaned01))
@@ -72,7 +71,7 @@ training.cleaned02 <- training.cleaned01[,-c(1, removeColumns )]
 testing.cleaned02 <- testing.cleaned01[,-c(1, removeColumns )]
 ```
 
-Then convert all factors to integers
+Then converting all factors to integers,
 ```{r}
 classeLevels <- levels(training.cleaned02$classe)
 training.cleaned03 <- data.frame(data.matrix(training.cleaned02))
@@ -80,14 +79,14 @@ training.cleaned03$classe <- factor(training.cleaned03$classe, labels=classeLeve
 testing.cleaned03 <- data.frame(data.matrix(testing.cleaned02))
 ```
 
-Finally set the dataset to be explored
+Finally set the dataset to be explored.
 
 ```{r}
 training.cleaned <- training.cleaned03
 testing.cleaned <- testing.cleaned03
 ```
 
-## Creating a validation set 
+## Creating a validation set
 
 Since the test set provided is the the ultimate validation set, we will split the current training in a test and train set to work with.
 
@@ -100,9 +99,7 @@ training.subSetTrain <- training.cleaned[partition, ]
 training.subSetTest <- training.cleaned[-partition, ]
 ```
 
-## Exploring the data
-
-Which fields have high correlations with the classe?
+What are some fields that have high correlations with the classe?
 
 ```{r}
 correlations <- cor(training.subSetTrain[, -classeIndex], as.numeric(training.subSetTrain$classe))
@@ -110,7 +107,8 @@ bestCorrelations <- subset(as.data.frame(as.table(correlations)), abs(Freq)>0.3)
 bestCorrelations
 ```
 
-Even the best correlations with classe are hardly above 0.3, let's check visually if it's indeed hard to use these 2 as possible simple linear predictors.
+Even the best correlations with classe are hardly above 0.3
+Let's check visually if there is indeed hard to use these 2 as possible simple linear predictors.
 
 ```{r}
 library(Rmisc)
@@ -126,7 +124,9 @@ Clearly there is no hard seperation of classes possible using only these 'highly
 
 ## Selecting a model
 
-Let's identify variables with high correlations amongst each other in our set, so we can possibly exclude them from the pca or training. We will check afterwards if these modifications to the dataset make the model more accurate, perhaps faster.
+Let's identify variables with high correlations amongst each other in our set, so we can possibly exclude them from the pca or training. 
+
+We will check afterwards if these modifications to the dataset make the model more accurate, perhaps faster.
 
 ```{r}
 library(corrplot)
@@ -136,7 +136,8 @@ excludeColumns <- c(highlyCorrelated, classeIndex)
 corrplot(correlationMatrix, method="color", type="lower", order="hclust", tl.cex=0.70, tl.col="black", tl.srt = 45, diag = FALSE)
 ```
 
-We see that there are some features that aree quite correlated with each other. We will have a model with these excluded. Also we'll try and reduce the features by running PCA on all and the excluded subset of the features.
+We see that there are some features that aree quite correlated with each other.
+We will have a model with these excluded. Also we'll try and reduce the features by running PCA on all and the excluded subset of the features
 
 ```{r}
 pcaPreProcess.all <- preProcess(training.subSetTrain[, -classeIndex], method = "pca", thresh = 0.99)
@@ -152,7 +153,8 @@ testing.pca.subset <- predict(pcaPreProcess.subset, testing.cleaned[, -classeInd
 ## Implementing the model
 
 Now we'll do some actual Random Forest training.
-We'll use 200 trees, because I've already seen that the error rate doesn't decline a lot after say 50 trees, but we still want to be thorough. Also we will time each of the 4 random forest models to see if when all else is equal one pops out as the faster one.
+We'll use 200 trees, because I've already seen that the error rate doesn't decline a lot after say 50 trees, but we still want to be thorough.
+Also we will time each of the 4 random forest models to see if when all else is equal one pops out as the faster one.
 
 ```{r}
 library(randomForest)
@@ -199,7 +201,7 @@ rfMod.pca.subset <- randomForest(
 proc.time() - start
 ```
 
-## How good is the model?
+## Evaluating the models
 
 Now that we have 4 trained models, we will check the accuracies of each.
 
@@ -232,7 +234,8 @@ The `rfMod.exclude` perform's slightly better then the 'rfMod.cleaned'
 We'll stick with the `rfMod.exclude` model as the best model to use for predicting the test set.
 Because with an accuracy of 98.7% and an estimated OOB error rate of 0.23% this is the best model.
 
-Before doing the final prediction we will examine the chosen model more in depth using some plots
+## In-depth look into the model
+Before doing the final prediction we will examine the chosen model more in depth using some plots -
 
 ```{r}
 par(mfrow=c(1,2)) 
@@ -241,7 +244,7 @@ plot(rfMod.exclude, , cex=0.7, main='Error vs No. of trees plot')
 par(mfrow=c(1,1)) 
 ```
 
-To really look in depth at the distances between predictions we can use MDSplot and cluster predictiosn and results
+To really look in depth at the distances between predictions we can use MDSplot and cluster predictiosn and results -
 
 ```{r}
 start <- proc.time()
@@ -263,7 +266,7 @@ legend("bottomleft", legend=unique(rfMod.pam$clustering), pch=seq(15,14+length(c
 proc.time() - start
 ```
 
-# Test results
+# Test set prediction
 
 Although we've chosen the `rfMod.exclude` it's still nice to see what the other 3 models would predict on the final test set.
 Let's look at predictions for all models on the final test set. 
@@ -277,3 +280,5 @@ predictions <- t(cbind(
 ))
 predictions
 ```
+
+The predictions don't really change a lot with each model, but since we have most faith in the `rfMod.exclude`, we'll keep that as final answer.
